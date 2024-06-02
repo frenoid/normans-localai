@@ -1,5 +1,12 @@
 version: "3.9"
 services:
+  nginx: # Gateway to do SSL termination
+    image: docker.io/nginx:1.27.0-alpine
+    ports:
+      - 9999:443 # TLS listening on 443, safer to expose this to the outside world
+    volumes:
+    - ./nginx/conf.d:/etc/nginx/conf.d
+    - ./nginx/ssl:/etc/nginx/ssl
   api:
     # image: localai/localai:latest-aio-cpu
     # For a specific version:
@@ -10,24 +17,27 @@ services:
     # image: localai/localai:latest-aio-gpu-nvidia-cuda-11
     # image: localai/localai:latest-aio-gpu-nvidia-cuda-12
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/readyz"]
+      test:
+      - "CMD"
+      - "curl"
+      - "-f" 
+      - "http://localhost:8080/readyz"
       interval: 1m
       timeout: 20m
       retries: 5
     ports:
-      - 9999:8080
+      - 9998:8080 # HTTP listening on 8080, do not expose this to Internet
     env_file:
       - .env
     environment:
       - DEBUG=true
-      - API_KEY=${API_KEY}
+      - API_KEY=${API_KEY}  # If non-empty, clients must set OPENAI_API_KEY to connect
     volumes:
       - ./models:/build/models:cached
-    # decomment the following piece if running with Nvidia GPUs
     deploy:
       resources:
         reservations:
-          devices:
+          devices: # Enables GPU access
           - driver: nvidia
             count: 1
             capabilities: [gpu]

@@ -1,2 +1,5 @@
 models/
 *.env
+nginx/ssl/ca.crt
+nginx/ssl/ca.key
+nginx/ssl/generate_keys.sh
